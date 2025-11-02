@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Games</title>
+  <style>
+    :root{
+      --bg:#0f1216;
+      --panel:#171b22;
+      --card:#1b2029;
+      --text:#e7ebf1;
+      --muted:#9aa3af;
+      --accent:#6aa9ff;
+      --accent-2:#7cddc0;
+      --border:#2a313d;
+      --focus:#a6c8ff;
+      --radius:12px;
+      --space:16px;
+      --shadow:0 10px 30px rgba(0,0,0,0.35);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      background:linear-gradient(180deg,#0d1014 0%, #10141a 100%);
+      color:var(--text);
+      font:14px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+    a{color:inherit;text-decoration:none}
+    .container{
+      max-width:1100px;
+      margin:0 auto;
+      padding:32px 24px 40px;
+    }
+    header{
+      display:grid;
+      gap:14px;
+      margin-bottom:18px;
+    }
+    .title{
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    .logo{
+      width:36px;height:36px;border-radius:8px;
+      background:linear-gradient(135deg,var(--accent),var(--accent-2));
+      box-shadow:0 8px 18px rgba(106,169,255,0.35);
+    }
+    h1{font-size:22px;margin:0}
+    .subtitle{color:var(--muted);font-size:13px}
+
+    .toolbar{
+      display:flex;
+      flex-wrap:wrap;
+      gap:12px;
+      padding:14px;
+      background:var(--panel);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+    }
+    .search{
+      position:relative;
+      flex:1 1 280px;
+    }
+    .search input{
+      width:100%;
+      height:40px;
+      padding:0 38px 0 38px;
+      border:1px solid var(--border);
+      border-radius:10px;
+      background:var(--card);
+      color:var(--text);
+      outline:none;
+      box-shadow:none;
+    }
+    .search input::placeholder{color:#77808e}
+    .search .icon{
+      position:absolute;left:10px;top:50%;transform:translateY(-50%);
+      width:18px;height:18px;border-radius:4px;
+      background:linear-gradient(135deg,#526177,#8aa2c9);
+      opacity:.9;
+    }
+    .search .clear{
+      position:absolute;right:8px;top:50%;transform:translateY(-50%);
+      border:none;background:transparent;color:#91a0b7;cursor:pointer;
+      padding:4px;font-size:16px;line-height:1;border-radius:6px;
+    }
+    .filters{
+      display:flex;gap:8px;align-items:center;flex-wrap:wrap;
+    }
+    .chip{
+      padding:8px 10px;
+      border:1px solid var(--border);
+      border-radius:10px;
+      background:var(--card);
+      color:var(--text);
+      cursor:pointer;
+      transition:background .15s,border-color .15s;
+      font-size:13px;
+    }
+    .chip[data-active="true"]{
+      border-color:#4a74b8;
+      background:linear-gradient(180deg,#1a2230,#1f2734);
+      box-shadow:0 6px 16px rgba(74,116,184,.25) inset;
+    }
+
+    .grid{
+      margin-top:16px;
+      display:grid;
+      grid-template-columns:repeat(auto-fill,minmax(240px,1fr));
+      gap:16px;
+    }
+    .card{
+      display:flex;flex-direction:column;
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      overflow:hidden;
+      box-shadow:var(--shadow);
+      transition:transform .12s ease, box-shadow .12s ease;
+    }
+    .card:focus-within,.card:hover{transform:translateY(-2px)}
+    .thumb{
+      aspect-ratio:16/9;
+      background:#111622;
+      background-image:linear-gradient(135deg,#293141,#3b4a63);
+      display:flex;align-items:center;justify-content:center;
+      color:#cfe0ff;font-weight:600;font-size:14px;
+    }
+    .content{padding:12px}
+    .name{font-weight:600;margin:0 0 6px}
+    .meta{display:flex;gap:8px;flex-wrap:wrap;color:#95a0af;font-size:12px}
+    .desc{margin:10px 0 10px;color:#b8c2cf;font-size:13px}
+    .tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+    .tag{
+      font-size:11px;color:#cfe0ff;background:#22304a;
+      border:1px solid #2c3c59;border-radius:8px;padding:4px 8px;
+    }
+    .cta{
+      display:flex;justify-content:space-between;align-items:center;margin-top:10px;
+    }
+    .btn{
+      padding:8px 10px;border-radius:10px;border:1px solid var(--border);
+      background:linear-gradient(180deg,#1e2531,#222a37);color:#dbe6f7;
+      font-weight:600;font-size:13px;cursor:pointer;
+    }
+    .btn.secondary{background:#1b2029;color:#cbd6e8}
+    .empty{
+      margin:24px auto;
+      color:#9aa3af;background:var(--panel);
+      border:1px solid var(--border);border-radius:12px;
+      padding:18px;text-align:center;max-width:520px;
+    }
+    .sr-only{
+      position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;
+      clip:rect(0,0,0,0);white-space:nowrap;border:0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="title">
+        <div class="logo" aria-hidden="true"></div>
+        <div>
+          <h1>Games library</h1>
+        </div>
+      </div>
+
+      <div class="toolbar" role="search">
+        <div class="search">
+          <span class="icon" aria-hidden="true"></span>
+          <label class="sr-only" for="q">Search games</label>
+          <input id="q" name="q" type="search" placeholder="Search by title, tag, or description…" autocomplete="off" />
+          <button class="clear" aria-label="Clear search" title="Clear">×</button>
+        </div>
+        <div class="filters" aria-label="Filters">
+          <button class="chip" data-filter="All" data-active="true">All</button>
+          <button class="chip" data-filter="Action">Action</button>
+          <button class="chip" data-filter="Adventure">Adventure</button>
+          <button class="chip" data-filter="Puzzle">Puzzle</button>
+          <button class="chip" data-filter="RPG">RPG</button>
+          <button class="chip" data-filter="Strategy">Strategy</button>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section id="grid" class="grid" aria-live="polite"></section>
+      <div id="empty" class="empty" hidden>No games match your search. Try different keywords or clear filters.</div>
+    </main>
+  </div>
+
+  <script>
+    // Data schema: extend as needed
+    const games = [
+      {
+        id: "g-001",
+        name: "Mastermind",
+        category: "board game",
+        version: "0.0.2",
+        tags: [],
+        description: "Mastermind is a classic two‑player code‑breaking board game where one player creates a hidden sequence of colored pegs and the other tries to guess it within a limited number of turns, using logical deduction based on feedback.",
+        url: "./mastermind/v0.0.2/index.html",
+        coverText: "MasterMind",
+        players: "Single-player",
+        year: 2025
+      },
+      {
+        id: "g-001",
+        name: "Hangman",
+        category: "board game",
+        version: "0.0.2",
+        tags: [],
+        description: "Hangman is a classic word‑guessing game where one player thinks of a secret word and the other tries to guess it letter by letter, with each wrong guess bringing the stick‑figure “hangman” closer to completion.",
+        url: "./HangmanApp/v0.0.2/index.html",
+        coverText: "Hangman",
+        players: "Single-player",
+        year: 2025
+      }
+    ];
+
+    const elGrid = document.getElementById("grid");
+    const elEmpty = document.getElementById("empty");
+    const elSearch = document.getElementById("q");
+    const elClear = document.querySelector(".search .clear");
+    const filterChips = Array.from(document.querySelectorAll(".chip"));
+
+    let state = {
+      query: "",
+      category: "All"
+    };
+
+    function normalize(s){ return (s || "").toLowerCase(); }
+
+    function matches(game, q, cat){
+      const nq = normalize(q);
+      const inCategory = (cat === "All") || game.category === cat;
+      if (!nq) return inCategory;
+      const hay = [
+        game.name,
+        game.description,
+        ...(game.tags || []),
+        game.category
+      ].map(normalize).join(" ");
+      return inCategory && hay.includes(nq);
+    }
+
+    function renderCard(game){
+      const tagsHtml = (game.tags || []).map(t => `<span class="tag">${t}</span>`).join("");
+      return `
+        <article class="card" tabindex="0" aria-label="${game.name}">
+          <div class="thumb" aria-hidden="true">${game.coverText || game.name.slice(0,3).toUpperCase()}</div>
+          <div class="content">
+            <h2 class="name">${game.name}</h2>
+            <div class="meta">
+              <span>${game.category}</span>
+              <span>•</span>
+              <span>${game.players}</span>
+              <span>•</span>
+              <span>${game.year}</span>
+            </div>
+            <p class="desc">${game.description}</p>
+            <div class="tags">${tagsHtml}</div>
+            <div class="cta">
+              <a class="btn" href="${game.url}" aria-label="Open ${game.name}">Play</a>
+              <button class="btn secondary" data-id="${game.id}" aria-label="Details for ${game.name}">Details</button>
+            </div>
+          </div>
+        </article>
+      `;
+    }
+
+    function render(){
+      const filtered = games.filter(g => matches(g, state.query, state.category));
+      elGrid.innerHTML = filtered.map(renderCard).join("");
+      elEmpty.hidden = filtered.length !== 0;
+    }
+
+    // Events: search
+    elSearch.addEventListener("input", (e) => {
+      state.query = e.target.value.trim();
+      render();
+    });
+
+    // Clear search
+    elClear.addEventListener("click", () => {
+      elSearch.value = "";
+      state.query = "";
+      render();
+      elSearch.focus();
+    });
+
+    // Filter chips
+    filterChips.forEach(chip => {
+      chip.addEventListener("click", () => {
+        filterChips.forEach(c => c.dataset.active = "false");
+        chip.dataset.active = "true";
+        state.category = chip.dataset.filter;
+        render();
+      });
+    });
+
+    // Demo: details click
+    elGrid.addEventListener("click", (e) => {
+      const btn = e.target.closest("button[data-id]");
+      if (!btn) return;
+      const game = games.find(g => g.id === btn.dataset.id);
+      if (game){
+        alert(`${game.name}\n\nCategory: ${game.category}\nPlayers: ${game.players}\nYear: ${game.year}\n\n${game.description}`);
+      }
+    });
+
+    // Initial render
+    render();
+  </script>
+</body>
+</html>
