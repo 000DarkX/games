@@ -224,4 +224,5 @@ class Chance {
     static vs(a, b, v) {
         return a + this.generator() * v > b + this.generator() * v ? 0 : 1;
     }
+
 }
