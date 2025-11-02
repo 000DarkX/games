@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hangman</title>
+    <style>
+        main > section {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            gap: .5rem;
+        }
+        html, body {
+            background-color: #1a2b45;
+            color: white;;
+            font-family: monospace;
+            font-size: xx-large;
+            display: grid;
+            grid-template-rows: 1fr 90%;
+        }
+        button,input {
+            width: 120px;
+            height: auto;
+            border: 2px dashed dodgerblue;
+            color: white;
+            background-color: transparent;
+            font-size: xx-large;
+            font-family: monospace;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+        button:disabled {
+            background-color: gray;
+        }
+        button:hover,input[type=button]:hover {
+            background-color: darkblue;
+            cursor: pointer;
+        }
+        a {
+            color: white;
+            font-size: xx-large;
+            font-family: monospace;
+        }
+        .hide {
+            display: none !important;
+        }
+        form {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: center;
+            gap: 1rem;
+        }
+        header {
+            position: relative;
+        }
+        dialog {
+            background-color: #1a2b45;
+            text-align: center;
+
+            flex-direction: column;
+            width: 100%;
+            margin: unset;
+            inset-inline-start: unset;
+        }
+
+        dialog form {
+            flex-wrap: wrap;
+        }
+
+        h1 {
+            color: white;
+        }
+        .letters {
+            width: auto;
+            display: flex;
+            overflow: hidden;
+            flex-wrap: wrap;
+            user-select: none;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav>
+            <ul>
+                <li><a href="javascript:void(0)" onclick="history.back()">Back</a></li>
+                <li><a href="javascript:void(0)" onclick="dialog.showModal()">New Game</a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <section>
+            <div class="word"></div>
+            <div class="text"></div>
+            <form class="letters" method="dialog"></form>
+        </section>
+    </main>
+    <dialog open style="z-index: 9999;">
+        <h1>Choose Complexity</h1>
+        <form method="dialog">
+            <button>Very Easy</button>
+            <button>Easy</button>
+            <button>Medium</button>
+            <button>Hard</button>
+            <button>Random</button>
+        </form>
+    </dialog>
+    <script>
+        const dialog     = document.querySelector("dialog");
+        const dialogForm = dialog.querySelector("dialog form");
+        const textDiv    = document.querySelector(".text");
+        const wordDiv    = document.querySelector(".word");
+        const lettersForm = document.querySelector(".letters");
+
+        class HangmanEngine {
+            constructor() {
+                this.words   = [];
+                this.letters = [];
+                this.word    = "";
+                this.state   = [];
+                this.guesses = 0;
+                this.running = true;
+            }
+
+            async init() {
+                this.words = (await (await fetch(`./words_alpha.txt`)).text()).replaceAll("\r", "").split("\n");
+                this.easy_words = (await (await fetch(`./easy_alpha.txt`)).text()).replaceAll("\r", "").split("\n");
+                this.byLen = {};
+                this.longest = 0;
+                for (const word of this.words) {
+                    if (!(word.length in this.byLen)) {
+                        this.byLen[word.length] = [];
+                    }
+                    this.byLen[word.length].push(word);
+                    if (word.length > this.longest) {
+                        this.longest = word.length;
+                    }
+                }
+            }
+
+            guess(letter) {
+                if (!this.running) return;
+                let idx;
+                do {
+                    idx = this.word.indexOf(letter, idx+1);
+                    if (idx < 0) break;
+                    this.state[idx] = letter;       
+                } while (idx != -1);
+
+                ++this.guesses;
+                if (this.state.join("") == this.word) {
+                    this.running = false;
+                    return true;
+                } 
+                else if (this.guesses >= 10) {
+                    this.running = false;
+                    return false;
+                }
+            }
+
+            biasLower(min, max, power = 2) {
+                const rand = Math.random();
+                const biasedRand = Math.pow(rand, power);
+                const value = min + biasedRand * (max - min);
+                return Math.trunc(value);
+            }
+
+            chooseWord(n, list="words") {
+                if (list == "easy_words") {
+                    return this.easy_words[Math.trunc(Math.random() * this.easy_words.length)];
+                }
+                const keys  = Object.keys(this.byLen);
+                const per   = Math.trunc(keys.length / 3);
+                const nn    = n * per;
+                const idx   = this.biasLower((n-1)*per, n * per);
+                const words = this.byLen[keys[idx]];
+                return words[Math.trunc(Math.random() * words.length)];
+            }
+
+            newGame(skillLevel) {
+                this.running    = true;
+                this.skillLevel = skillLevel;
+                this.guesses     = 0;
+                this.letters    = [];
+                for (let i = "A".charCodeAt(0); i <= "Z".charCodeAt(0); ++i) {
+                    this.letters.push(String.fromCharCode(i));
+                }
+                switch (this.skillLevel) {
+                    case "very easy": 
+                    {
+                        this.word = this.chooseWord(1, "easy_words");
+                    }
+                    break;
+                    case "easy": 
+                    {
+                        this.word = this.chooseWord(1);
+                    }
+                    break;
+                    case "medium": 
+                    {
+                        this.word = this.chooseWord(2);
+                    }
+                    break;
+                    case "hard":
+                    {
+                        this.word = this.chooseWord(3);
+                    }
+                    break;
+                    case "random": 
+                    {
+                        this.word = this.words[Math.trunc(Math.random() * this.words.length)];
+                    }   
+                    break;
+                }
+                this.word  = this.word.toUpperCase();
+                const set  = new Set();
+                for (const l of this.word) {
+                    set.add(l);
+                }
+                this.maxGuesses = Math.max(10, set.size);
+                this.state = new Array(this.word.length).fill("_");
+            }
+        }
+
+        const engine = new HangmanEngine();
+        engine.init();
+
+        function newGame(skillLevel) {
+            engine.newGame(skillLevel);
+            wordDiv.innerHTML = engine.state.join(" ");
+            textDiv.innerHTML = `Guesses Left: 10`;
+            lettersForm.innerHTML = "";
+            for (let i = "A".charCodeAt(0); i <= "Z".charCodeAt(0); ++i) {
+                const btn = document.createElement("button");
+                btn.textContent = String.fromCodePoint(i);
+                lettersForm.appendChild(btn);
+                btn.onclick = e => {
+                    if (!engine.running) return;
+                    btn.setAttribute("disabled", true);
+                    const retval = engine.guess(btn.textContent);
+                    wordDiv.innerHTML = engine.state.join(" ");
+                    if (retval === true) {
+                        textDiv.textContent = `You win!`;
+                        engine.running = false;
+                        switch (engine.skillLevel) {
+                            case "very easy": 
+                            {
+                                parent.giveCoin(1);
+                            }
+                            break;
+                            case "easy": 
+                            {
+                                parent.giveCoin(2);
+                            }
+                            break;
+                            case "medium": 
+                            {
+                                parent.giveCoin(3);
+                            }
+                            break;
+                            case "hard":
+                            {
+                                parent.giveCoin(4);
+                            }
+                            break;
+                            case "random": 
+                            {
+                                parent.giveCoin(1);
+                            }   
+                            break;
+                        }
+                    } else if (retval === false) {
+                        textDiv.textContent = `You failed! The word was ${engine.word}`;
+                    } else {
+                        textDiv.textContent = `Guesses Left: ${10 - engine.guesses}`;
+                    }
+                };
+            }
+        }
+
+        dialogForm.onsubmit = e => {
+            newGame(e.submitter.textContent.toLowerCase());
+        }
+    </script>
+</body>
+</html>
