@@ -1,0 +1,74 @@
+:root {
+  --primary-text-color: #222;
+  --secondary-text-color: #fff;
+  --primary-bg-color: #222;
+  --secondary-bg-color: #fff;
+  --tertiary-bg-color: #ddd;
+}
+
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 2rem auto;
+  max-width: 70ch
+}
+
+.tabs label {
+  background: var(--primary-bg-color);
+  color: var(--secondary-text-color);
+  cursor: pointer;
+  display: block;
+  font-weight: 600;
+  margin-right: 0.3rem;
+  order: initial;
+  padding: 1rem 2rem;
+  transition: background ease 0.3s;
+  width: 100%;
+}
+
+.tabs .tab-content {
+  background: var(--secondary-bg-color);
+  display: none;
+  flex-grow: 1;
+  padding: 1rem;
+  width: 100%;
+}
+
+.tabs input[type="radio"] {
+  display: none;
+}
+
+.tabs input[type="radio"]:checked + label {
+  background: var(--secondary-bg-color);
+  color: var(--primary-text-color)
+}
+
+.tabs input[type="radio"]:checked + label + .tab-content {
+  display: block;
+}
+
+@media (min-width: 10em) {
+  .tabs .tab-content {
+    order: 99
+  }
+  
+  .tabs label {
+    order: 1;
+  }
+  
+  .tabs label {
+    margin-right: 0.3rem;
+    margin-top: 0;
+    width: auto;
+  }
+}
+
+/* Optional: Smooth content transition */
+.tabs .content {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}

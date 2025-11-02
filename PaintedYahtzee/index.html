@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painted Yahtzee</title>
+    <link rel="stylesheet" href="./dice.css">
+    <link rel="stylesheet" href="./tabs.css">
+    <script  type="module">
+        import Chance from "./Chance.mjs";
+        globalThis.Chance = Chance;
+    </script>
+    <style>
+        body {
+            display: grid;
+            background-color: slategrey;
+        }
+        .rollBtn {
+            width: 100%;
+        }
+        .total {
+            font-weight: bold;
+            font-size: xx-large;
+            display: flex;
+            justify-self: center;
+            align-self: center;
+        }
+        .score-sheet input {
+            width: 32px;
+            height: 32px;
+            text-align: center;
+            cursor: pointer;
+            background-color: black;
+        }
+        .tab-content .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+        }
+        .score-sheet label {
+            display: grid;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="die red">
+            <div class="face one"><div class="pip"></div></div>
+            <div class="face two">
+                <div class="pip"></div>
+                <div class="pip"></div>
+            </div>
+            <div class="face three">
+                <div class="pip"></div>
+                <div class="pip"></div>
+                <div class="pip"></div>
+            </div>
+            <div class="face four">
+                <div class="pip"></div>
+                <div class="pip"></div>
+                <div class="pip"></div>
+                <div class="pip"></div>
+            </div>
+            <div class="face five">
+                <div class="pip"></div>
+                <div class="pip"></div>
+                <div class="pip"></div>
+                <div class="pip"></div>
+                <div class="pip"></div>
+            </div>
+            <div class="face six">
+                <div class="pip"></div>
+                <div class="pip"></div>
+                <div class="pip"></div>
+                <div class="pip"></div>
+                <div class="pip"></div>
+                <div class="pip"></div>
+            </div>
+        </div>
+
+        <div class="die green">
+            <div class="face one"><div class="pip"></div></div>
+            <div class="face two">
+                <div class="pip"></div>
+                <div class="pip"></div>
+            </div>
+            <div class="face three">
+                <div class="pip"></div>
+                <div class="pip"></div>
+                <div class="pip"></div>
+            </div>
+            <div class="face four">
+                <div class="pip"></div>
+                <div class="pip"></div>
+                <div class="pip"></div>
+                <div class="pip"></div>
+            </div>
+            <div class="face five">
+                <div class="pip"></div>
+                <div class="pip"></div>
+                <div class="pip"></div>
+                <div class="pip"></div>
+                <div class="pip"></div>
+            </div>
+            <div class="face six">
+                <div class="pip"></div>
+                <div class="pip"></div>
+                <div class="pip"></div>
+                <div class="pip"></div>
+                <div class="pip"></div>
+                <div class="pip"></div>
+            </div>
+        </div>
+
+        <div class="die blue">
+            <div class="face one"><div class="pip"></div></div>
+            <div class="face two">
+                <div class="pip"></div>
+                <div class="pip"></div>
+            </div>
+            <div class="face three">
+                <div class="pip"></div>
+                <div class="pip"></div>
+                <div class="pip"></div>
+            </div>
+            <div class="face four">
+                <div class="pip"></div>
+                <div class="pip"></div>
+                <div class="pip"></div>
+                <div class="pip"></div>
+            </div>
+            <div class="face five">
+                <div class="pip"></div>
+                <div class="pip"></div>
+                <div class="pip"></div>
+                <div class="pip"></div>
+                <div class="pip"></div>
+            </div>
+            <div class="face six">
+                <div class="pip"></div>
+                <div class="pip"></div>
+                <div class="pip"></div>
+                <div class="pip"></div>
+                <div class="pip"></div>
+                <div class="pip"></div>
+            </div>
+        </div>
+
+        <div class="die yellow">
+            <div class="face one"><div class="pip"></div></div>
+            <div class="face two">
+                <div class="pip"></div>
+                <div class="pip"></div>
+            </div>
+            <div class="face three">
+                <div class="pip"></div>
+                <div class="pip"></div>
+                <div class="pip"></div>
+            </div>
+            <div class="face four">
+                <div class="pip"></div>
+                <div class="pip"></div>
+                <div class="pip"></div>
+                <div class="pip"></div>
+            </div>
+            <div class="face five">
+                <div class="pip"></div>
+                <div class="pip"></div>
+                <div class="pip"></div>
+                <div class="pip"></div>
+                <div class="pip"></div>
+            </div>
+            <div class="face six">
+                <div class="pip"></div>
+                <div class="pip"></div>
+                <div class="pip"></div>
+                <div class="pip"></div>
+                <div class="pip"></div>
+                <div class="pip"></div>
+            </div>
+        </div>
+
+        <div class="die purple">
+            <div class="face one"><div class="pip"></div></div>
+            <div class="face two">
+                <div class="pip"></div>
+                <div class="pip"></div>
+            </div>
+            <div class="face three">
+                <div class="pip"></div>
+                <div class="pip"></div>
+                <div class="pip"></div>
+            </div>
+            <div class="face four">
+                <div class="pip"></div>
+                <div class="pip"></div>
+                <div class="pip"></div>
+                <div class="pip"></div>
+            </div>
+            <div class="face five">
+                <div class="pip"></div>
+                <div class="pip"></div>
+                <div class="pip"></div>
+                <div class="pip"></div>
+                <div class="pip"></div>
+            </div>
+            <div class="face six">
+                <div class="pip"></div>
+                <div class="pip"></div>
+                <div class="pip"></div>
+                <div class="pip"></div>
+                <div class="pip"></div>
+                <div class="pip"></div>
+            </div>
+        </div>
+    </div>
+    <div>
+        <button class="rollBtn button-90">Roll</button>
+    </div>
+    <div class="score-sheet">
+        <div class="tabs">
+        <input type="radio" name="tabs" id="tab1" checked="checked">
+        <label for="tab1">Upper</label>
+        <div class="tab-content">
+            <h2>Upper</h2>
+            <div class="container">
+                <label>Ones: <input readonly id="ones" name="score" value="_"></label>
+                <label>Twos: <input readonly id="twos" name="score" value="_"></label>
+                <label>Threes: <input readonly id="threes" name="score" value="_"></label>
+                <label>Fours: <input readonly id="fours" name="score" value="_"></label>
+                <label>Fives: <input readonly id="fives" name="score" value="_"></label>
+                <label>Sixes: <input readonly id="sixes" name="score" value="_"></label>
+            </div>  
+            <div class="total" id="upper-bonus">Bonus (63): 0</div>
+            <div class="total" id="upper-total">Total: 0</div>
+        </div>
+        
+        <input type="radio" name="tabs" id="tab2">
+        <label for="tab2">Middle</label>
+        <div class="tab-content">
+            <h2>Middle</h2>
+            <div class="container">
+                <label>Blues: <input readonly id="blue" name="score" value="_"></label>
+                <label>Greens: <input readonly id="green" name="score" value="_"></label>
+                <label>Reds: <input readonly id="red" name="score" value="_"></label>
+                <label>Yellows: <input readonly id="yellow" name="score" value="_"></label>
+                <label>Purples: <input readonly id="purple" name="score" value="_"></label>
+            </div>  
+            <div class="total" id="middle-bonus">Bonus (75): 0</div>
+            <div class="total" id="middle-total">Total: 0</div>
+        </div>
+        
+        <input type="radio" name="tabs" id="tab3">
+        <label for="tab3">Lower</label>
+        <div class="tab-content">
+            <h2>Lower</h2>
+            <div class="container">
+                <label>4 kind: <input readonly id="4k" name="score" value="_"></label>
+                <label>4 color: <input readonly id="4c" name="score" value="_"></label>
+                <label>Full House: <input readonly id="fh" name="score" value="_"></label>
+                <label>Painted House: <input readonly id="ph" name="score" value="_"></label>
+                <label>Rainbow: <input readonly id="rainbow" name="score" value="_"></label>
+                <label>Straight: <input readonly id="straight" name="score" value="_"></label>
+                <label>Flush: <input readonly id="flush" name="score" value="_"></label>
+                <label>Yahtzee: <input readonly id="yahtzee" name="score" value="_"></label>
+                <label>Chance: <input readonly id="chance" name="score" value="_"></label>
+            </div>  
+            <div class="total" id="lower-bonus">Bonus: 0</div>
+            <div class="total" id="lower-total">Total: 0</div>
+        </div>
+        </div>
+
+        <div class="total" id="grand-total">Grand Total: 0</div>
+    </div>
+    <script type="module">
+        import Engine from "./Engine.mjs";
+
+        const engine = new Engine();
+
+        const rollBtn = document.querySelector(".rollBtn");
+
+        function setup() {
+            const dice = document.querySelectorAll(".die");
+
+            for (const die of dice) {
+                die.onclick = e => {
+                    e.currentTarget.classList.toggle("selected");
+                };
+            }
+
+            engine.running = true;
+            rollBtn.addEventListener("click", rollDice);
+            rollDice();
+        }
+        
+        rollBtn.addEventListener("click", setup, {once: true});
+
+        function rollDice() {
+            active = new Date();
+            engine.checkDice();
+            if (engine.cantRoll) {
+                return;
+            }
+            const dice  = document.querySelectorAll('.die');
+            const color = ["red","blue","green","purple","yellow"];
+            let result   = [];
+
+            let i = 0;
+            for (const die of dice) {
+                let randomFace, randomColor;
+
+                if (!die.classList.contains("selected")) {
+                    // Pick a random face
+                    randomFace = faceMap[Math.floor(Math.random() * faceMap.length)];
+                    randomColor = Chance.pick(color);
+
+                    // Apply rotation
+                    if (getFaceUp(randomFace.x, randomFace.y) == engine?.dice[i]?.value) {
+                        die.style.transform = "";
+                        setTimeout(() => {
+                            die.style.transform = `rotateX(${randomFace.x}deg) rotateY(${randomFace.y}deg)`;
+                        }, 333);
+                    } else {
+                        die.style.transform = `rotateX(${randomFace.x}deg) rotateY(${randomFace.y}deg)`;
+                    }
+                    
+                    for (const c of color) {
+                        die.classList.remove(c);
+                    }
+                    die.classList.add(randomColor);
+                    result[i] = {
+                        value: getFaceUp(randomFace.x, randomFace.y), 
+                        color: randomColor
+                    };
+
+                    // Display the result
+                    console.log("Result:", getFaceUp(randomFace.x, randomFace.y), randomColor);
+                } else {
+                    result[i] = engine.dice[i];
+                }
+    
+                ++i;
+            }
+           
+            engine.putDice(result);
+            rollBtn.textContent = `Roll (${engine.rolls} of 3)`;
+        }
+
+        const faceMap = [
+            { x: 0, y: 0, face: 1 },     // Front
+            { x: 0, y: 90, face: 4 },    // Right
+            { x: 0, y: 180, face: 3 },   // Back
+            { x: 0, y: -90, face: 2 },   // Left
+            { x: 90, y: 0, face: 6 },    // Top
+            { x: -90, y: 0, face: 5 }    // Bottom
+        ];
+
+        function getFaceUp(x, y) {
+            const matchedFace = faceMap.find(f => f.x === x && f.y === y);
+            return matchedFace ? matchedFace.face : "Rolling...";
+        }
+
+        let active = new Date();
+        setInterval(() => {
+            if (new Date() - active <= 30_000)
+                parent.giveCoin(1);
+        }, 30_000);
+    </script>
+</body>
+</html>
