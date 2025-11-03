@@ -270,7 +270,7 @@
 
     function marketDrift(dt) {
         // slowly shift trend
-        trend += (Math.random() - 0.5) * 0.01 * dt;
+        trend += (Math.random() - 0.5) * 0.02 * dt;
         trend = clamp(-0.05, trend, 0.05);
 
         // apply trend + noise
@@ -279,20 +279,27 @@
     }
 
     function updateUI() {
-      ui.clips.textContent = fmt(state.clips);
-      ui.cash.textContent = fmtCash(state.cash);
-      ui.clipPrice.textContent = fmtCash(state.clipPrice);
+    ui.clips.textContent = fmt(state.clips);
+    ui.cash.textContent = fmtCash(state.cash);
 
-      if (state.unlocks.automation) {
+    // show price + trend arrow
+    let arrow = "";
+    if (trend > 0.005) arrow = " ⬆️";
+    else if (trend < -0.005) arrow = " ⬇️";
+    else arrow = " ➡️";
+
+    ui.clipPrice.textContent = fmtCash(state.clipPrice) + arrow;
+
+    if (state.unlocks.automation) {
         ui.buyAuto.disabled = false;
         ui.buyMarketing.disabled = false;
         ui.buyFactory.disabled = false;
-        ui.unlockHint.textContent = `Automation active: ${state.autoRate * state.autoMult}/s`;
-      } else {
+        ui.unlockHint.textContent = `Automation active: ${(state.autoRate * state.autoMult).toFixed(2)}/s`;
+    } else {
         ui.buyAuto.disabled = true;
         ui.buyMarketing.disabled = true;
         ui.buyFactory.disabled = true;
-      }
+    }
     }
 
     function checkUnlocks() {
