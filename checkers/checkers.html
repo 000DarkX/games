@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Checkers</title>
+<style>
+  :root {
+    --board-size: 560px;
+    --dark: #3b2f2f;
+    --light: #e8d6b8;
+    --red: #d94c4c;
+    --black: #2b2b2b;
+    --highlight: #4caf50;
+    --select: #2196f3;
+  }
+  body {
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    background: #f6f6f8;
+    color: #222;
+    display: grid;
+    place-items: center;
+    min-height: 100vh;
+    margin: 0;
+  }
+  .app {
+    display: grid;
+    gap: 12px;
+    width: min(95vw, var(--board-size));
+  }
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  h1 {
+    font-size: 20px;
+    margin: 0;
+    font-weight: 600;
+  }
+  .controls {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  button {
+    background: #222;
+    color: #fff;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  button.secondary {
+    background: #e0e0e0;
+    color: #222;
+  }
+  .status {
+    font-size: 14px;
+    color: #555;
+  }
+
+  .board {
+    aspect-ratio: 1;
+    width: 100%;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    grid-template-rows: repeat(8, 1fr);
+  }
+  .square {
+    position: relative;
+    display: grid;
+    place-items: center;
+    user-select: none;
+  }
+  .dark { background: var(--dark); }
+  .light { background: var(--light); }
+
+  .piece {
+    width: 70%;
+    height: 70%;
+    border-radius: 50%;
+    box-shadow:
+      inset 0 2px 6px rgba(255,255,255,0.5),
+      inset 0 -3px 6px rgba(0,0,0,0.35),
+      0 6px 10px rgba(0,0,0,0.25);
+    transition: transform 120ms ease;
+  }
+  .piece.red { background: var(--red); }
+  .piece.black { background: var(--black); }
+  .piece.king::after {
+    content: "♛";
+    position: absolute;
+    font-size: clamp(16px, 3vw, 22px);
+    color: #ffd54f;
+    text-shadow: 0 0 4px rgba(0,0,0,0.6);
+  }
+  .piece.selectable { outline: 3px solid var(--select); }
+  .move-dot, .capture-ring {
+    position: absolute;
+    pointer-events: none;
+  }
+  .move-dot {
+    width: 18%;
+    height: 18%;
+    border-radius: 50%;
+    background: var(--highlight);
+    opacity: 0.85;
+  }
+  .capture-ring {
+    width: 85%;
+    height: 85%;
+    border-radius: 50%;
+    border: 3px dashed var(--highlight);
+    opacity: 0.9;
+  }
+  .coords {
+    position: absolute;
+    bottom: 6px;
+    right: 6px;
+    font-size: 11px;
+    color: rgba(255,255,255,0.75);
+  }
+  .light .coords { color: rgba(0,0,0,0.45); }
+
+  footer {
+    font-size: 13px;
+    color: #666;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <h1>Checkers</h1>
+      <div class="controls">
+        <button id="resetBtn">New game</button>
+        <button id="swapBtn" class="secondary">Swap sides</button>
+      </div>
+    </header>
+    <div class="status" id="status">Red to move</div>
+    <div class="board" id="board"></div>
+    <footer>
+      Click a piece to see legal moves. Captures are mandatory; multi-jumps are supported.
+    </footer>
+  </div>
+
+<script>
+/* Basic rules:
+   - 8x8 board; only dark squares are used.
+   - Red moves up (toward decreasing row). Black moves down.
+   - Regular pieces move diagonally forward 1; capture by jumping 2 over opponent.
+   - Must capture if any capture is available.
+   - Multi-jump allowed; you must continue capturing if possible.
+   - King when reaching far end, then can move/capture both directions.
+*/
+
+// Model types
+const RED = 'red';
+const BLACK = 'black';
+
+function makeInitialBoard() {
+  // 8x8; null or {color, king}
+  const b = Array.from({length: 8}, () => Array(8).fill(null));
+  const placeRows = (rows, color) => {
+    for (const r of rows) {
+      for (let c = 0; c < 8; c++) {
+        if ((r + c) % 2 === 1) {
+          b[r][c] = { color, king: false };
+        }
+      }
+    }
+  };
+  placeRows([0,1,2], BLACK);
+  placeRows([5,6,7], RED);
+  return b;
+}
+
+// Helpers
+const inBounds = (r,c) => r >= 0 && r < 8 && c >= 0 && c < 8;
+
+function cloneBoard(b) {
+  return b.map(row => row.map(cell => cell ? { ...cell } : null));
+}
+
+function opposite(color) {
+  return color === RED ? BLACK : RED;
+}
+
+// Movement deltas
+const DIRS = {
+  [RED]: [[-1,-1], [-1, 1]],
+  [BLACK]: [[ 1,-1], [ 1, 1]],
+};
+const KING_DIRS = [[-1,-1], [-1,1], [1,-1], [1,1]];
+
+// Compute legal moves for a specific piece
+function computeMoves(board, r, c) {
+  const piece = board[r][c];
+  if (!piece) return { moves: [], captures: [] };
+  const dirs = piece.king ? KING_DIRS : DIRS[piece.color];
+  const moves = [];
+  const captures = [];
+
+  for (const [dr, dc] of dirs) {
+    const nr = r + dr, nc = c + dc;
+    if (inBounds(nr, nc) && !board[nr][nc]) {
+      moves.push({ from: [r,c], to: [nr,nc], capture: null });
+    }
+    const jr = r + 2*dr, jc = c + 2*dc;
+    if (inBounds(jr, jc) && !board[jr][jc]) {
+      const mid = board[r + dr][c + dc];
+      if (mid && mid.color !== piece.color) {
+        captures.push({ from: [r,c], to: [jr,jc], capture: [r+dr,c+dc] });
+      }
+    }
+  }
+  return { moves, captures };
+}
+
+// Compute all legal actions for current player, enforcing mandatory capture
+function computeLegalActions(board, player) {
+  const actions = [];
+  const captureActions = [];
+  for (let r = 0; r < 8; r++) {
+    for (let c = 0; c < 8; c++) {
+      const p = board[r][c];
+      if (!p || p.color !== player) continue;
+      const { moves, captures } = computeMoves(board, r, c);
+      for (const m of moves) actions.push(m);
+      for (const cap of captures) captureActions.push(cap);
+    }
+  }
+  return captureActions.length ? captureActions : actions;
+}
+
+// After a capture, compute additional captures for multi-jump
+function computeFollowUpCaptures(board, r, c) {
+  const { captures } = computeMoves(board, r, c);
+  return captures;
+}
+
+// Apply a move to a board state
+function applyAction(board, action) {
+  const b = cloneBoard(board);
+  const [fr, fc] = action.from;
+  const [tr, tc] = action.to;
+  const piece = b[fr][fc];
+  b[fr][fc] = null;
+  b[tr][tc] = piece;
+
+  // Remove captured piece
+  if (action.capture) {
+    const [cr, cc] = action.capture;
+    b[cr][cc] = null;
+  }
+
+  // Kinging
+  if (!piece.king) {
+    if (piece.color === RED && tr === 0) piece.king = true;
+    if (piece.color === BLACK && tr === 7) piece.king = true;
+  }
+  return b;
+}
+
+// UI state
+let board = makeInitialBoard();
+let currentPlayer = RED;
+let selected = null; // [r,c] or null
+let legalActions = computeLegalActions(board, currentPlayer);
+let forcedCaptureMode = legalActions.some(a => a.capture !== null);
+let inMultiJump = false; // if true, only actions for selected piece allowed
+
+const boardEl = document.getElementById('board');
+const statusEl = document.getElementById('status');
+const resetBtn = document.getElementById('resetBtn');
+const swapBtn = document.getElementById('swapBtn');
+
+// Render board
+function render() {
+  boardEl.innerHTML = '';
+  for (let r = 0; r < 8; r++) {
+    for (let c = 0; c < 8; c++) {
+      const sq = document.createElement('div');
+      sq.className = 'square ' + (((r + c) % 2 === 1) ? 'dark' : 'light');
+      sq.dataset.r = r;
+      sq.dataset.c = c;
+
+      // Coordinates (for clarity)
+      const coord = document.createElement('div');
+      coord.className = 'coords';
+      coord.textContent = String.fromCharCode(65 + c) + (8 - r);
+      sq.appendChild(coord);
+
+      const piece = board[r][c];
+      if (piece) {
+        const el = document.createElement('div');
+        el.className = `piece ${piece.color}` + (piece.king ? ' king' : '');
+        el.dataset.r = r;
+        el.dataset.c = c;
+
+        const isPlayersPiece = piece.color === currentPlayer;
+        const hasCapture = legalActions.some(a => a.from[0] === r && a.from[1] === c && a.capture);
+        const isSelectable = isPlayersPiece && (!forcedCaptureMode || hasCapture);
+
+        if (isSelectable) {
+          el.classList.add('selectable');
+        }
+        sq.appendChild(el);
+      }
+
+      boardEl.appendChild(sq);
+    }
+  }
+
+  // Highlight moves for selected
+  if (selected) {
+    const [sr, sc] = selected;
+    const moves = legalActions.filter(a => a.from[0] === sr && a.from[1] === sc);
+    for (const m of moves) {
+      const [tr, tc] = m.to;
+      const idx = tr * 8 + tc;
+      const target = boardEl.children[idx];
+      const indicator = document.createElement('div');
+      indicator.className = m.capture ? 'capture-ring' : 'move-dot';
+      target.appendChild(indicator);
+    }
+  }
+
+  // Status
+  const capsAvailable = legalActions.some(a => a.capture);
+  const playerText = currentPlayer === RED ? 'Red' : 'Black';
+  let status = `${playerText} to move`;
+  if (inMultiJump) status += ' (continue capture)';
+  else if (capsAvailable) status += ' (capture available)';
+  statusEl.textContent = status;
+
+  // Check game over
+  if (legalActions.length === 0) {
+    statusEl.textContent = `${playerText} has no legal moves — ${opposite(currentPlayer)} wins`;
+  }
+
+  // If it's Black's turn, let AI play automatically
+  if (currentPlayer === BLACK && legalActions.length > 0) {
+      setTimeout(aiMove, 500); // small delay for UX
+  }
+}
+
+// Handle clicks
+boardEl.addEventListener('click', (e) => {
+  const target = e.target;
+  // Click on piece
+  if (target.classList.contains('piece')) {
+    const r = parseInt(target.dataset.r, 10);
+    const c = parseInt(target.dataset.c, 10);
+    const piece = board[r][c];
+    if (!piece || piece.color !== currentPlayer) return;
+
+    // If forced capture mode, only allow selecting capturing pieces
+    const pieceHasCapture = legalActions.some(a => a.from[0] === r && a.from[1] === c && a.capture);
+    if (forcedCaptureMode && !pieceHasCapture && !inMultiJump) return;
+
+    // In multi-jump, only allow the same piece
+    if (inMultiJump && (!selected || selected[0] !== r || selected[1] !== c)) return;
+
+    selected = [r, c];
+    render();
+    return;
+  }
+
+  // Click on square
+  if (target.classList.contains('square')) {
+    const r = parseInt(target.dataset.r, 10);
+    const c = parseInt(target.dataset.c, 10);
+    if (!selected) return;
+
+    // Find matching action
+    const action = legalActions.find(a =>
+      a.from[0] === selected[0] &&
+      a.from[1] === selected[1] &&
+      a.to[0] === r &&
+      a.to[1] === c
+    );
+    if (!action) return;
+
+    // Apply action
+    board = applyAction(board, action);
+
+    // After capture, check for multi-jump with the moved piece
+    if (action.capture) {
+      const [mr, mc] = action.to;
+      const followUps = computeFollowUpCaptures(board, mr, mc);
+      if (followUps.length > 0) {
+        // Lock to this piece until captures end
+        selected = [mr, mc];
+        legalActions = followUps; // Only further captures allowed
+        inMultiJump = true;
+        forcedCaptureMode = true;
+        render();
+        return;
+      }
+    }
+
+    // End turn
+    currentPlayer = opposite(currentPlayer);
+    selected = null;
+    legalActions = computeLegalActions(board, currentPlayer);
+    forcedCaptureMode = legalActions.some(a => a.capture);
+    inMultiJump = false;
+    render();
+  }
+});
+
+// Controls
+resetBtn.addEventListener('click', () => {
+  board = makeInitialBoard();
+  currentPlayer = RED;
+  selected = null;
+  legalActions = computeLegalActions(board, currentPlayer);
+  forcedCaptureMode = legalActions.some(a => a.capture);
+  inMultiJump = false;
+  render();
+});
+
+swapBtn.addEventListener('click', () => {
+  // Swap Red/Black positions and the current player perspective
+  const swapped = Array.from({length: 8}, () => Array(8).fill(null));
+  for (let r = 0; r < 8; r++) {
+    for (let c = 0; c < 8; c++) {
+      const p = board[r][c];
+      if (p) {
+        const sr = 7 - r;
+        const sc = c; // keep files; only flip ranks
+        swapped[sr][sc] = { color: opposite(p.color), king: p.king };
+      }
+    }
+  }
+  board = swapped;
+  currentPlayer = opposite(currentPlayer);
+  selected = null;
+  legalActions = computeLegalActions(board, currentPlayer);
+  forcedCaptureMode = legalActions.some(a => a.capture);
+  inMultiJump = false;
+  render();
+});
+
+// Initial render
+render();
+</script>
+<script>
+    // --- Evaluation function ---
+    function evaluateBoard(board, aiColor) {
+    let score = 0;
+    for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
+        const p = board[r][c];
+        if (!p) continue;
+        const val = p.king ? 1.5 : 1;
+        score += (p.color === aiColor ? val : -val);
+        }
+    }
+    return score;
+    }
+
+    // --- Minimax with depth limit ---
+    function minimax(board, player, depth, maximizing, aiColor) {
+    if (depth === 0) {
+        return { score: evaluateBoard(board, aiColor) };
+    }
+    const actions = computeLegalActions(board, player);
+    if (actions.length === 0) {
+        // No moves: losing position
+        return { score: (player === aiColor ? -999 : 999) };
+    }
+
+    if (maximizing) {
+        let best = { score: -Infinity };
+        for (const action of actions) {
+        const newBoard = applyAction(board, action);
+        let nextPlayer = player;
+        // Handle multi-jump
+        if (action.capture) {
+            const [r,c] = action.to;
+            const followUps = computeFollowUpCaptures(newBoard, r, c);
+            if (followUps.length > 0) {
+            // Continue same player's turn
+            const result = minimax(newBoard, player, depth-1, true, aiColor);
+            if (result.score > best.score) best = { score: result.score, action };
+            continue;
+            }
+        }
+        nextPlayer = opposite(player);
+        const result = minimax(newBoard, nextPlayer, depth-1, false, aiColor);
+        if (result.score > best.score) best = { score: result.score, action };
+        }
+        return best;
+    } else {
+        let best = { score: Infinity };
+        for (const action of actions) {
+        const newBoard = applyAction(board, action);
+        let nextPlayer = player;
+        if (action.capture) {
+            const [r,c] = action.to;
+            const followUps = computeFollowUpCaptures(newBoard, r, c);
+            if (followUps.length > 0) {
+            const result = minimax(newBoard, player, depth-1, false, aiColor);
+            if (result.score < best.score) best = { score: result.score, action };
+            continue;
+            }
+        }
+        nextPlayer = opposite(player);
+        const result = minimax(newBoard, nextPlayer, depth-1, true, aiColor);
+        if (result.score < best.score) best = { score: result.score, action };
+        }
+        return best;
+    }
+    }
+
+    // --- AI move wrapper ---
+    function aiMove() {
+    const aiColor = currentPlayer;
+    const best = minimax(board, aiColor, 3, true, aiColor); // depth=3
+    if (best.action) {
+        board = applyAction(board, best.action);
+        // Handle multi-jump continuation
+        if (best.action.capture) {
+        const [r,c] = best.action.to;
+        const followUps = computeFollowUpCaptures(board, r, c);
+        if (followUps.length > 0) {
+            // For simplicity, AI just picks first follow-up
+            const next = minimax(board, aiColor, 2, true, aiColor);
+            if (next.action) {
+            board = applyAction(board, next.action);
+            }
+        }
+        }
+    }
+    currentPlayer = opposite(currentPlayer);
+    legalActions = computeLegalActions(board, currentPlayer);
+    forcedCaptureMode = legalActions.some(a => a.capture);
+    inMultiJump = false;
+    selected = null;
+    render();
+    }
+</script>
+</body>
+</html>
