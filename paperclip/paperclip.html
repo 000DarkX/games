@@ -179,7 +179,7 @@
         <div class="list">
           <div class="tile">
             <div>
-              <div class="title">Auto-clipper</div>
+              <div class="title" id="auto-clipper">Auto-clipper</div>
               <div class="meta">Generates paperclips passively per second once unlocked.</div>
             </div>
             <div>
@@ -189,7 +189,7 @@
 
           <div class="tile">
             <div>
-              <div class="title">Marketing boost</div>
+              <div class="title" id="market-boost">Marketing boost</div>
               <div class="meta">Increases demand; clips sell for more.</div>
             </div>
             <div>
@@ -251,7 +251,9 @@
       convertClips: document.getElementById('convertClips'),
 
       buyAuto: document.getElementById('buyAuto'),
+      autoClipper: document.getElementById("auto-clipper"),
       buyMarketing: document.getElementById('buyMarketing'),
+      marketBoost: document.getElementById("market-boost"),
       buyFactory: document.getElementById('buyFactory'),
       unlockHint: document.getElementById('unlockHint'),
 
@@ -289,6 +291,8 @@
     else arrow = " ➡️";
 
     ui.clipPrice.textContent = fmtCash(state.clipPrice) + arrow;
+    ui.autoClipper.textContent = `Auto-clipper (${fmt(state.autoRate / 0.2)})`;
+    ui.marketBoost.textContent = `Marketing boost (%${fmt((state.sellMultiplier - 1.0) / .1)*10})`;
 
     if (state.unlocks.automation) {
         ui.buyAuto.disabled = false;
