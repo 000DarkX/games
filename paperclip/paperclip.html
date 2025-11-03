@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Idle Paperclip</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --bg: #0f1220;
+      --panel: #151935;
+      --text: #e8ebff;
+      --muted: #a9b1d6;
+      --accent: #6aa9ff;
+      --accent-2: #8df0c0;
+      --danger: #ff6a92;
+      --good: #7cf08d;
+      --btn: #1d2350;
+      --btn-hover: #262c6f;
+      --border: #242a5a;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      background: radial-gradient(1000px 600px at 20% 0%, #131730 0%, var(--bg) 60%);
+      color: var(--text);
+    }
+
+    .app {
+      max-width: 900px;
+      margin: 24px auto;
+      padding: 24px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .panel {
+      background: linear-gradient(180deg, var(--panel) 0%, #121530 100%);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+    }
+
+    h1, h2, h3 {
+      margin: 0 0 12px;
+      letter-spacing: 0.2px;
+    }
+    h1 { font-size: 24px; }
+    h2 { font-size: 18px; color: var(--muted); }
+    h3 { font-size: 16px; color: var(--muted); }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-top: 12px;
+    }
+    .stat {
+      background: #101331;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+    }
+    .stat .label { color: var(--muted); font-size: 12px; }
+    .stat .value { font-size: 18px; margin-top: 4px; }
+
+    .row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      appearance: none;
+      border: 1px solid var(--border);
+      background: var(--btn);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background .2s ease, transform .02s ease;
+    }
+    button:hover { background: var(--btn-hover); }
+    button:active { transform: translateY(1px); }
+    button.primary { background: #283082; }
+    button.primary:hover { background: #3039a0; }
+    button.success { background: #1f3b2b; border-color: #2e6b4f; }
+    button.success:hover { background: #28503a; }
+    button.danger { background: #3d2330; border-color: #7a365c; }
+    button.danger:hover { background: #4a2a3a; }
+    button:disabled {
+      opacity: .55;
+      cursor: not-allowed;
+      filter: grayscale(.3);
+    }
+
+    .hint { color: var(--muted); font-size: 12px; margin-top: 6px; }
+    .divider { height: 1px; background: var(--border); margin: 12px 0; }
+
+    .list {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+    .tile {
+      background: #101331;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .tile .meta { color: var(--muted); font-size: 12px; }
+    .tile .title { font-size: 14px; }
+
+    .footer {
+      margin-top: 16px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    @media (max-width: 780px) {
+      .grid { grid-template-columns: 1fr; }
+      .stats { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <h1>Idle Paperclip</h1>
+    <h2>Buy clips, unlock automation, watch compounding growth.</h2>
+
+    <div class="stats">
+      <div class="stat">
+        <div class="label">Paperclips</div>
+        <div class="value" id="clips">0</div>
+      </div>
+      <div class="stat">
+        <div class="label">Cash</div>
+        <div class="value" id="cash">$0</div>
+      </div>
+      <div class="stat">
+        <div class="label">Clip price</div>
+        <div class="value" id="clipPrice">$1</div>
+      </div>
+    </div>
+
+    <div class="grid" style="margin-top:16px;">
+      <div class="panel">
+        <h3>Manual production</h3>
+        <div class="row">
+          <button class="primary" id="buy1">Buy 1 clip</button>
+          <button id="buy10">Buy 10</button>
+          <button id="sell1">Sell 1</button>
+          <button id="sell10">Sell 10</button>
+        </div>
+        <div class="hint">Buying increases demand and raises price slightly; selling lowers price a bit.</div>
+        <div class="divider"></div>
+        <div class="row">
+          <button class="success" id="convertClips">Convert 10 clips → $</button>
+          <span class="hint">Turn inventory into cash when needed.</span>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>Automation</h3>
+        <div class="list">
+          <div class="tile">
+            <div>
+              <div class="title">Auto-clipper</div>
+              <div class="meta">Generates paperclips passively per second once unlocked.</div>
+            </div>
+            <div>
+              <button id="buyAuto" disabled>Buy (+0.2/s) — $50</button>
+            </div>
+          </div>
+
+          <div class="tile">
+            <div>
+              <div class="title">Marketing boost</div>
+              <div class="meta">Increases demand; clips sell for more.</div>
+            </div>
+            <div>
+              <button id="buyMarketing" disabled>Buy (+10% sell value) — $120</button>
+            </div>
+          </div>
+
+          <div class="tile">
+            <div>
+              <div class="title">Factory upgrade</div>
+              <div class="meta">Doubles auto production speed.</div>
+            </div>
+            <div>
+              <button id="buyFactory" disabled>Buy (x2 auto) — $400</button>
+            </div>
+          </div>
+        </div>
+        <div class="hint" id="unlockHint">Automation unlocks after you own 25 clips or reach $100.</div>
+      </div>
+    </div>
+
+    <div class="panel" style="margin-top:16px;">
+      <h3>Game controls</h3>
+      <div class="row">
+        <button id="save">Save</button>
+        <button id="load">Load</button>
+        <button class="danger" id="reset">Reset</button>
+      </div>
+      <div class="footer">Saves automatically every 30 seconds. Offline progress is simulated for up to 2 hours.</div>
+    </div>
+  </div>
+
+  <script>
+    // --- Core state ---
+    const state = {
+      clips: 0,
+      cash: 0,
+      clipPrice: 1,           // current market price for buying
+      sellMultiplier: 1.0,    // affects sell revenue
+      autoRate: 0,            // clips per second
+      autoMult: 1,            // factory multiplier
+      unlocks: {
+        automation: false
+      },
+      lastTick: Date.now(),
+      lastSave: Date.now()
+    };
+
+    // --- UI references ---
+    const ui = {
+      clips: document.getElementById('clips'),
+      cash: document.getElementById('cash'),
+      clipPrice: document.getElementById('clipPrice'),
+
+      buy1: document.getElementById('buy1'),
+      buy10: document.getElementById('buy10'),
+      sell1: document.getElementById('sell1'),
+      sell10: document.getElementById('sell10'),
+      convertClips: document.getElementById('convertClips'),
+
+      buyAuto: document.getElementById('buyAuto'),
+      buyMarketing: document.getElementById('buyMarketing'),
+      buyFactory: document.getElementById('buyFactory'),
+      unlockHint: document.getElementById('unlockHint'),
+
+      save: document.getElementById('save'),
+      load: document.getElementById('load'),
+      reset: document.getElementById('reset')
+    };
+
+    // --- Helpers ---
+    const fmtCash = v => `$${Math.floor(v).toLocaleString()}`;
+    const fmt = v => Math.floor(v).toLocaleString();
+
+    function clamp(min, v, max) { return Math.max(min, Math.min(v, max)); }
+
+    let trend = 0; // global variable
+
+    function marketDrift(dt) {
+        // slowly shift trend
+        trend += (Math.random() - 0.5) * 0.01 * dt;
+        trend = clamp(-0.05, trend, 0.05);
+
+        // apply trend + noise
+        const change = trend * dt + (Math.random() - 0.5) * 0.02 * dt;
+        state.clipPrice = clamp(0.5, state.clipPrice + change, 999999);
+    }
+
+    function updateUI() {
+      ui.clips.textContent = fmt(state.clips);
+      ui.cash.textContent = fmtCash(state.cash);
+      ui.clipPrice.textContent = fmtCash(state.clipPrice);
+
+      if (state.unlocks.automation) {
+        ui.buyAuto.disabled = false;
+        ui.buyMarketing.disabled = false;
+        ui.buyFactory.disabled = false;
+        ui.unlockHint.textContent = `Automation active: ${state.autoRate * state.autoMult}/s`;
+      } else {
+        ui.buyAuto.disabled = true;
+        ui.buyMarketing.disabled = true;
+        ui.buyFactory.disabled = true;
+      }
+    }
+
+    function checkUnlocks() {
+      if (!state.unlocks.automation && (state.clips >= 25 || state.cash >= 100)) {
+        state.unlocks.automation = true;
+      }
+    }
+
+    // --- Economy tweaks ---
+    function inflatePriceOnBuy(qty) {
+      // Logarithmic price growth to keep scaling fun
+      const delta = Math.log2(1 + qty) * 0.6;
+      state.clipPrice = clamp(1, state.clipPrice + delta, 999999);
+    }
+    function deflatePriceOnSell(qty) {
+      const delta = Math.log2(1 + qty) * 0.45;
+      state.clipPrice = clamp(1, state.clipPrice - delta, 999999);
+    }
+
+    // --- Actions ---
+    function buy(qty) {
+      const totalCost = state.clipPrice * qty;
+      if (state.cash < totalCost) return;
+      state.cash -= totalCost;
+      state.clips += qty;
+      inflatePriceOnBuy(qty);
+      checkUnlocks();
+      updateUI();
+    }
+
+    function sell(qty) {
+      if (state.clips < qty) return;
+      const sellPriceEach = Math.max(0.5, state.clipPrice * 0.6) * state.sellMultiplier;
+      const revenue = sellPriceEach * qty;
+      state.clips -= qty;
+      state.cash += revenue;
+      deflatePriceOnSell(qty);
+      checkUnlocks();
+      updateUI();
+    }
+
+    function convertClipsToCash() {
+      const qty = Math.min(10, state.clips);
+      if (qty <= 0) return;
+      const value = (state.clipPrice * 0.8) * state.sellMultiplier * qty;
+      state.clips -= qty;
+      state.cash += value;
+      deflatePriceOnSell(qty * 0.5);
+      updateUI();
+    }
+
+    // --- Upgrades ---
+    function buyAuto() {
+      const cost = 50;
+      if (state.cash < cost) return;
+      state.cash -= cost;
+      state.autoRate += 0.2;
+      updateUI();
+    }
+
+    function buyMarketing() {
+      const cost = 120;
+      if (state.cash < cost) return;
+      state.cash -= cost;
+      state.sellMultiplier *= 1.10;
+      updateUI();
+    }
+
+    function buyFactory() {
+      const cost = 400;
+      if (state.cash < cost) return;
+      state.cash -= cost;
+      state.autoMult *= 2;
+      updateUI();
+    }
+
+    // --- Tick & offline progress ---
+    function tick(dt) {
+      // passive production
+      const produced = (state.autoRate * state.autoMult) * dt;
+      if (produced > 0) {
+        state.clips += produced;
+        // slow demand nudge raises price very slightly as market heats up
+        state.clipPrice = clamp(1, state.clipPrice + (produced * 0.01), 999999);
+      }
+    }
+
+    function loop() {
+      const now = Date.now();
+      const dt = (now - state.lastTick) / 1000; // seconds
+      state.lastTick = now;
+
+      tick(dt);
+      marketDrift(dt);
+      checkUnlocks();
+      updateUI();
+
+      // autosave
+      if (now - state.lastSave > 30_000) {
+        save();
+        state.lastSave = now;
+      }
+      requestAnimationFrame(loop);
+    }
+
+    // --- Save / Load / Reset ---
+    const SAVE_KEY = 'idle-paperclip-save-v1';
+
+    function save() {
+      const payload = { ...state, lastTick: Date.now() };
+      localStorage.setItem(SAVE_KEY, JSON.stringify(payload));
+    }
+
+    function load() {
+      const raw = localStorage.getItem(SAVE_KEY);
+      if (!raw) return;
+      const data = JSON.parse(raw);
+
+      // restore primitive values safely
+      state.clips = Number(data.clips || 0);
+      state.cash = Number(data.cash || 0);
+      state.clipPrice = Number(data.clipPrice || 1);
+      state.sellMultiplier = Number(data.sellMultiplier || 1.0);
+      state.autoRate = Number(data.autoRate || 0);
+      state.autoMult = Number(data.autoMult || 1);
+      state.unlocks = data.unlocks || { automation: false };
+
+      // offline progress (cap at 2 hours)
+      const then = Number(data.lastTick || Date.now());
+      const now = Date.now();
+      const offlineSec = clamp(0, (now - then) / 1000, 2 * 60 * 60);
+      tick(offlineSec);
+
+      updateUI();
+    }
+
+    function reset() {
+      if (!confirm('Reset game? All progress will be lost.')) return;
+      localStorage.removeItem(SAVE_KEY);
+      state.clips = 0;
+      state.cash = 20;
+      state.clipPrice = 1;
+      state.sellMultiplier = 1.0;
+      state.autoRate = 0;
+      state.autoMult = 1;
+      state.unlocks.automation = false;
+      updateUI();
+    }
+
+    // --- Bindings ---
+    ui.buy1.onclick = () => buy(1);
+    ui.buy10.onclick = () => buy(10);
+    ui.sell1.onclick = () => sell(1);
+    ui.sell10.onclick = () => sell(10);
+    ui.convertClips.onclick = convertClipsToCash;
+
+    ui.buyAuto.onclick = buyAuto;
+    ui.buyMarketing.onclick = buyMarketing;
+    ui.buyFactory.onclick = buyFactory;
+
+    ui.save.onclick = save;
+    ui.load.onclick = load;
+    ui.reset.onclick = reset;
+
+    // Seed economy with some cash to start
+    function bootstrap() {
+      // First-time grant
+      const raw = localStorage.getItem(SAVE_KEY);
+      if (!raw) {
+        state.cash = 50;
+      }
+      updateUI();
+      load();
+      state.lastTick = Date.now();
+      requestAnimationFrame(loop);
+    }
+
+    bootstrap();
+  </script>
+</body>
+</html>
