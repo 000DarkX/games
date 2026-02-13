@@ -29,6 +29,7 @@ export default class OptionsScreen extends Frame {
     }
 
     init(e) {
+        e.state.botSkill = 0;
         this.button = e.addImage("button", `static/Sprite-0003-3.png`);
         this.cursor = e.addImage("cursor", `static/Sprite-0001-cursor.png`);
     }
@@ -116,8 +117,8 @@ export default class OptionsScreen extends Frame {
         }));
     }
 
-    get botSkill(){ 
-        return ["Human", "Easy","Medium","Hard"][(this.state?.botSkill||0)%3];
+    get botSkill() { 
+        return ["Human", "Easy","Medium","Hard"][(this.state?.botSkill||0)%4];
     }
 
     enter(e, state) {
