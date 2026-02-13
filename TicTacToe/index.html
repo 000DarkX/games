@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        section {
+            width: 100%;
+            height: 100vh;
+        }
+        html, body {
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <div id="container"></div>
+    <script src="https://unpkg.com/konva@10/konva.min.js"></script>
+    <script src="./static/peerjs.min.js"></script>
+    <script type="module" src="input.mjs"></script>
+    <script type="module">
+        import {Engine, Frame} from "./Engine.mjs";
+        import {inputTick} from "./input.mjs";
+        import TitleScreen from "./TitleScreen.mjs";
+        import OptionsScreen from "./OptionsScreen.mjs";
+        import PlayScreen from "./PlayScreen.mjs";
+
+        const engine = new Engine();
+        engine.start("container");
+        engine.addFrame("title", new TitleScreen());
+        engine.addFrame("options", new OptionsScreen());
+        engine.addFrame("play", new PlayScreen());
+    </script>
+</body>
+</html>
