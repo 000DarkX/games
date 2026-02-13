@@ -245,33 +245,6 @@
                     if (retval === true) {
                         textDiv.textContent = `You win!`;
                         engine.running = false;
-                        switch (engine.skillLevel) {
-                            case "very easy": 
-                            {
-                                parent.giveCoin(1);
-                            }
-                            break;
-                            case "easy": 
-                            {
-                                parent.giveCoin(2);
-                            }
-                            break;
-                            case "medium": 
-                            {
-                                parent.giveCoin(3);
-                            }
-                            break;
-                            case "hard":
-                            {
-                                parent.giveCoin(4);
-                            }
-                            break;
-                            case "random": 
-                            {
-                                parent.giveCoin(1);
-                            }   
-                            break;
-                        }
                     } else if (retval === false) {
                         textDiv.textContent = `You failed! The word was ${engine.word}`;
                     } else {
