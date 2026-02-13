@@ -33,7 +33,6 @@ export default class Engine {
         if (this.gameEnd() & this.running == true) {
             alert(`Your score: ${this.gtotal}`);
             this.running = false;
-            parent.giveCoin(Math.trunc(this.gtotal / 30)||1);
             return true;
         }
         if (this.selected && this.rolls >= 1 && !this.selected.hasAttribute("data-value")) {
