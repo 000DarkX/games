@@ -139,7 +139,6 @@
       <h1>Checkers</h1>
       <div class="controls">
         <button id="resetBtn">New game</button>
-        <button id="swapBtn" class="secondary">Swap sides</button>
       </div>
     </header>
     <div class="status" id="status">Red to move</div>
@@ -426,7 +425,7 @@ resetBtn.addEventListener('click', () => {
   render();
 });
 
-swapBtn.addEventListener('click', () => {
+/*swapBtn.addEventListener('click', () => {
   // Swap Red/Black positions and the current player perspective
   const swapped = Array.from({length: 8}, () => Array(8).fill(null));
   for (let r = 0; r < 8; r++) {
@@ -446,7 +445,7 @@ swapBtn.addEventListener('click', () => {
   forcedCaptureMode = legalActions.some(a => a.capture);
   inMultiJump = false;
   render();
-});
+});*/
 
 // Initial render
 render();
@@ -548,4 +547,5 @@ render();
     }
 </script>
 </body>
+
 </html>
