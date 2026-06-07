@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hangman 2026</title>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <script type="module">
+        const canvas = document.getElementById("canvas");
+        const ctx    = canvas.getContext("2d");
+        const defaultCanvasSize = {
+            width: 800, height: 600
+        };
+        let hiddenWord = "";
+        let pickedWord = "";
+        let correct    = 0;
+        let guesses    = new Set();
+        let letterPos = [];
+        const wordsTxt = await (await fetch("words.txt")).text();
+        const words    = wordsTxt.split("\n").map(item => item.trim());
+
+        function replaceNthCharacter(str, n, newChar) {
+            let charArray = str.split('');
+
+            charArray[n] = newChar;
+            return charArray.join('');
+        }
+
+        function guessLetter(l) {
+            l = l.toUpperCase();
+            for (let i = 0; i < pickedWord.length; ++i) {
+                const c = pickedWord[i].toUpperCase();
+                if (l == c) {
+                    hiddenWord = replaceNthCharacter(hiddenWord, 2 * i + 1, l);
+                    ++correct;
+                }
+            }
+            guesses.add(l);
+            
+            if (correct >= pickedWord.length) {
+                alert(`Tries: ${guesses.size}`);
+                newGame();
+            }
+            
+            draw();
+        }
+
+        function makeHidden(word) {
+            return " _".repeat(word.length);
+        }
+
+        function newGame() {
+            const value = Math.trunc(Math.random() * words.length);
+            pickedWord  = words[value];
+            hiddenWord  = makeHidden(pickedWord);
+            guesses = new Set();
+            correct = 0;
+        }
+
+        const m1Ratio = 0.15;
+        const m2Ratio = 0.1;
+
+        function splitText(ctx, text, maxWidth) {
+            const lines = text.split('\n'); 
+            const result = [];
+
+            lines.forEach(line => {
+                let words = line.split(' '); 
+                let currentLine = '';
+
+                words.forEach(word => {
+                    let testLine = currentLine + (currentLine ? ' ' : '') + word;
+                    let metrics = ctx.measureText(testLine);
+                    let testWidth = metrics.width;
+
+                    if (testWidth > maxWidth && currentLine) {
+                        result.push(currentLine);
+                        currentLine = word; 
+                    } else {
+                        currentLine = testLine; 
+                    }
+                });
+                if (currentLine) {
+                    result.push(currentLine);
+                }
+            });
+
+            return result; 
+        }
+
+
+        function draw() { 
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.save();
+            ctx.scale(canvas.width / defaultCanvasSize.width, canvas.height / defaultCanvasSize.height);
+
+            ctx.font = `${defaultCanvasSize.height * m1Ratio}px monospace`;
+
+            let y = defaultCanvasSize.height * m1Ratio;
+            const text = splitText(ctx, hiddenWord, defaultCanvasSize.width);
+            for (let t of text) {
+                ctx.fillText(t, 0, y);
+                y += Math.round(defaultCanvasSize.height * m1Ratio);
+            }
+
+            ctx.font = `${defaultCanvasSize.height * m2Ratio}px monospace`;
+            const m2 = ctx.measureText("WZ");
+
+            let iA = 0;
+            for (let i = "A".charCodeAt(0); i <= "Z".charCodeAt(0); ++i) {
+                let x = iA * m2.width;
+                if (x + m2.width >= defaultCanvasSize.width) {
+                    x = 0;
+                    iA = 0;
+                    y += defaultCanvasSize.height * m2Ratio;
+                }
+                const c = String.fromCharCode(i);
+                if (guesses.has(c)) {
+                    ctx.fillStyle = "gray";
+                } else {
+                    ctx.fillStyle = "black";
+                }
+                ctx.fillText(c, x, y);
+                letterPos.push({x,y,width: m2.width, height: defaultCanvasSize.height * m2Ratio})
+                ++iA;
+            }
+
+            ctx.restore();
+        }
+
+        function click(e) {
+            const rx = defaultCanvasSize.width / canvas.width;
+            const ry = defaultCanvasSize.height / canvas.height;
+            const x  = rx * e.x;
+            const y  = ry * e.y;
+
+            let id = 0;
+            for (const l of letterPos) {
+                if (x >= l.x && x <= l.x + l.width && y >= l.y - l.height && y <= l.y) {
+                    guessLetter(String.fromCharCode("A".charCodeAt(0)+id));
+                    break;
+                }
+                ++id;
+            }
+        }
+
+        function resize() { 
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            draw();
+        }
+        
+        function startGame() {
+            newGame();
+            resize();
+        }
+
+        addEventListener("resize", resize);
+        canvas.onclick = click;
+        startGame();
+    </script>
+</body>
+</html>
